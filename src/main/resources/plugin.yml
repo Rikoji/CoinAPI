@@ -1,0 +1,19 @@
+name: CoinAPI
+version: '1.0-R1'
+main: de.hilsmann.coinAPI.CoinMain
+api-version: '1.21'
+prefix: CoinAPI
+authors: [ Rikoji, mao_ex ]
+description: Economy system by mcsw. DB based economy out of the box.
+website: mcsw.me
+
+commands:
+  coin:
+    usage:
+    aliases: [coins]
+  gem:
+    usage:
+    aliases: [gems]
+  crystal:
+    usage:
+    aliases: [kristall,kristalle]

@@ -1,0 +1,8 @@
+database:
+  useOnlineDb: true
+  host: "localhost"
+  port: 3306
+  name: "deine_datenbank"
+  username: "dein_benutzername"
+  password: "dein_passwort"
+  useSSL: true
