@@ -11,14 +11,17 @@ public class JoinListeners implements Listener {
 	@EventHandler
 	public void onJoin(PlayerJoinEvent e) {
 		Player p = e.getPlayer();
+		String playerUUID = p.getUniqueId().toString();
+		int coins = CoinAPI.getCoins(playerUUID);
+
 		if (!p.hasPlayedBefore()) {
-			if(CoinAPI.getCoins(e.getPlayer().getUniqueId().toString()) <= -999999999) {
-				CoinAPI.createCoin(p.getUniqueId().toString(), p.getName(), 100, 5, 0);
+			if (coins == -999999999) {
+				CoinAPI.createCoin(playerUUID, p.getName(), 100, 5, 0);
 			} else {
-				CoinAPI.createCoin(p.getUniqueId().toString(), p.getName(), CoinAPI.getCoins(p.getUniqueId().toString()), CoinAPI.getGems(p.getUniqueId().toString()), CoinAPI.getCrystals(p.getUniqueId().toString()));
+				CoinAPI.createCoin(playerUUID, p.getName(), coins, CoinAPI.getGems(playerUUID), CoinAPI.getCrystals(playerUUID));
 			}
-		}else {
-			CoinAPI.createCoin(p.getUniqueId().toString(), p.getName(), CoinAPI.getCoins(p.getUniqueId().toString()), CoinAPI.getGems(p.getUniqueId().toString()), CoinAPI.getCrystals(p.getUniqueId().toString()));
+		} else {
+			CoinAPI.createCoin(playerUUID, p.getName(), coins, CoinAPI.getGems(playerUUID), CoinAPI.getCrystals(playerUUID));
 		}
 	}
 }

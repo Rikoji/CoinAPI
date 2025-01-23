@@ -15,95 +15,77 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 public class TopInventory {
+
+    // Konstanten für die Item-Positionen
+    private static final int FIRST_PLACE_SLOT = 9;
+    private static final int SECOND_PLACE_SLOT = 18;
+    private static final int THIRD_PLACE_SLOT = 27;
+
+    // Erstellt ein Item mit einem bestimmten Material und einer bestimmten Position
+    private static ItemStack createItem(Material material, String displayName, List<String> lore) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(displayName);
+            meta.setLore(lore);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    // Fügt die Platzierungen (1., 2., 3.) zum Inventar hinzu
+    private static void addPlaceItems(Inventory inv) {
+        inv.setItem(FIRST_PLACE_SLOT, createItem(Material.GOLD_BLOCK, "§6§lErster Platz", Arrays.asList(" ")));
+        inv.setItem(SECOND_PLACE_SLOT, createItem(Material.IRON_BLOCK, "§7§lZweiter Platz", Arrays.asList(" ")));
+        inv.setItem(THIRD_PLACE_SLOT, createItem(Material.COPPER_BLOCK, "§c§lDritter Platz", Arrays.asList(" ")));
+    }
+
+    // Fügt einen Spieler in das Inventar ein (mit Name, Platzierung und Coins)
+    private static void addPlayerToInventory(Inventory inv, int slot, UUID uuid) {
+        ItemStack playerSkull = SkullCreator.itemFromUUID(uuid);
+        ItemMeta meta = playerSkull.getItemMeta();
+        if (meta != null) {
+            meta.setLore(Arrays.asList("§7Kontostand: §e" + CoinAPI.getCoins(uuid.toString())));
+            meta.setDisplayName("§7§l" + CoinAPI.getNameFrom(uuid.toString()) + " - §6§o" + CoinAPI.getCoins(uuid.toString()) + " Coins");
+            playerSkull.setItemMeta(meta);
+        }
+        inv.setItem(slot, playerSkull);
+    }
+
     public static Inventory getInv(Player p) {
-
-        ItemStack is;
-        ItemMeta ism;
-
         Inventory inv = Bukkit.createInventory(null, 54, "§9§lCoin Top");
-        ItemStack f = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta fm = f.getItemMeta();
-        fm.setDisplayName(" ");
-        f.setItemMeta(fm);
 
-        ItemStack fr = new ItemStack(Material.RED_STAINED_GLASS_PANE);
-        ItemMeta frm = fr.getItemMeta();
-        frm.setDisplayName(" ");
-        fr.setItemMeta(frm);
-
-        int i;
-        for (i = 0; i < GuiFunctions.invFrame.length; i++) {
-            inv.setItem(GuiFunctions.invFrame[i], f);
+        // Creating a frame
+        ItemStack filler = createItem(Material.BLACK_STAINED_GLASS_PANE, " ", Arrays.asList());
+        for (int i : GuiFunctions.invFrame) {
+            inv.setItem(i, filler);
         }
 
-        is = new ItemStack(Material.GOLD_BLOCK);
-        ism = is.getItemMeta();
-        ism.setDisplayName("§6§lErster Platz");
-        ism.setLore(Arrays.asList(" "));
-        is.setItemMeta(ism);
-        inv.setItem(9, is);
+        // Adding podium (1., 2., 3.)
+        addPlaceItems(inv);
 
-        is = new ItemStack(Material.IRON_BLOCK);
-        ism = is.getItemMeta();
-        ism.setDisplayName("§7§lZweiter Platz");
-        ism.setLore(Arrays.asList(" "));
-        is.setItemMeta(ism);
-        inv.setItem(18, is);
-
-        is = new ItemStack(Material.COPPER_BLOCK);
-        ism = is.getItemMeta();
-        ism.setDisplayName("§c§lDritter Platz");
-        ism.setLore(Arrays.asList(" "));
-        is.setItemMeta(ism);
-        inv.setItem(27, is);
-
-        int kopf = 1;
-        List<String> kopfList = CoinMain.topPlayerList;
-        for(int ip = 0; ip < inv.getSize(); ip++) {
-            if(inv.getItem(ip) != null) {
+        // Add TOP 10 Players
+        List<String> topPlayerList = CoinMain.topPlayerList;
+        int index = 0;
+        for (int i = 0; i < inv.getSize(); i++) {
+            if (inv.getItem(i) != null) {
                 continue;
-            }else {
-                UUID uuid = UUID.fromString(kopfList.get(kopf));
-                ItemStack kopfIs = SkullCreator.itemFromUUID(uuid);
-                //ItemStack kopfIs = SkullCreator.itemFromName(CoinAPI.getNameFrom(uuid));
-                ism = kopfIs.getItemMeta();
-                ism.setLore(Arrays.asList("§7Kontostand: §e" + CoinAPI.getCoins(String.valueOf(uuid))));
-                if (kopf == 1) {
-                    ism.setDisplayName("§6§l♯1 " + CoinAPI.getNameFrom(String.valueOf(uuid)));
-                    kopfIs.setItemMeta(ism);
-                    inv.setItem(10, kopfIs);
-                    kopf++;
-                    ip--;
-                    continue;
-                }else if (kopf == 2) {
-                    ism.setDisplayName("§7§l♯2 " + CoinAPI.getNameFrom(String.valueOf(uuid)));
-                    kopfIs.setItemMeta(ism);
-                    inv.setItem(19, kopfIs);
-                    kopf++;
-                    ip--;
-                    continue;
-                }else if (kopf == 3) {
-                    ism.setDisplayName("§c§l♯3 " + CoinAPI.getNameFrom(String.valueOf(uuid)));
-                    kopfIs.setItemMeta(ism);
-                    inv.setItem(28, kopfIs);
-                    kopf++;
-                    ip--;
-                    continue;
-                }
-                ism.setDisplayName("§7§l♯" + kopf + " " + CoinAPI.getNameFrom(String.valueOf(uuid)));
-                kopfIs.setItemMeta(ism);
-                inv.setItem(ip, kopfIs);
-                if (kopfList.size() - 1 == kopf) {
-                    break;
-                } else {
-                    kopf++;
-                }
             }
+
+            if (index >= topPlayerList.size()) {
+                break;
+            }
+
+            UUID uuid = UUID.fromString(topPlayerList.get(index));
+            addPlayerToInventory(inv, i, uuid);
+            index++;
         }
 
-        for(int i2 = 0; i2 < inv.getSize(); i2++) {
-            if(inv.getItem(i2) == null) {
-                inv.setItem(i2, fr);
+        // Fill empty slots with RED_STAINED_GLASS_PANE
+        ItemStack fillerRed = createItem(Material.RED_STAINED_GLASS_PANE, " ", Arrays.asList());
+        for (int i = 0; i < inv.getSize(); i++) {
+            if (inv.getItem(i) == null) {
+                inv.setItem(i, fillerRed);
             }
         }
 

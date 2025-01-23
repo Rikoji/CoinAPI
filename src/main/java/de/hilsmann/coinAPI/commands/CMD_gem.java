@@ -8,80 +8,87 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class CMD_gem implements CommandExecutor {
-	public final boolean isValidZahl(String code) {
-		return code.matches("0123456789");
+
+	private static void sendMessageToPlayer(Player p, String message) {
+		p.sendMessage(message);
 	}
 
-	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (sender instanceof Player) {
-			Player p = (Player) sender;
-			if (args.length == 0) {
-				p.sendMessage("§6§o" + p.getDisplayName() + " §7§odu hast " + "§b§o"
-						+ CoinAPI.getGems(p.getUniqueId().toString()) + " §a§oGems!");
-			} else if (args[0].equalsIgnoreCase("add")) {
-				if (p.hasPermission("coin.admin")) {
-					String name = args[1];
-					String coin = args[2];
-					Player t = Bukkit.getPlayer(name);
-					if (t != null) {
-						if (coin != null)
-							try {
-								int preisint = Integer.parseInt(coin);
-								CoinAPI.addGems(t.getUniqueId().toString(), preisint);
-								p.sendMessage("§7§oDem Spieler §a§o" + t.getName() + " §b§o" + preisint
-										+ " §a§oGems §7§ogegeben!");
-								t.sendMessage("§a§oDir wurden §b§o" + preisint + " §a§oGems gegeben!");
-							} catch (NumberFormatException exception) {
-								p.sendMessage("§c§oDie Zahl muss aus Nummern bestehen. (0123456789)");
-							}
-					} else {
-						p.sendMessage("§c§oDer Spieler ist nicht Online!");
-					}
-				} else {
-					p.sendMessage("§c§oDen Befehl d§rfen nur Admins nutzen!");
-				}
-			} else if (args[0].equalsIgnoreCase("show")) {
-				String name = args[1];
-				Player t = Bukkit.getPlayer(name);
-				if (t != null) {
-					p.sendMessage("§7§oDer Spieler §6§o" + t.getName() + " §7§obesitzt§b§o "
-							+ CoinAPI.getGems(t.getUniqueId().toString()) + " §a§oGems");
-				} else {
-					p.sendMessage("§c§oDer Spieler ist nicht Online!");
-				}
+	private static void sendMessageToTargetPlayer(Player target, String message) {
+		if (target != null) {
+			target.sendMessage(message);
+		}
+	}
+
+	private static void handlePlayerNotOnline(CommandSender sender, String playerName) {
+		sender.sendMessage("§c§oDer Spieler " + playerName + " ist nicht online!");
+	}
+
+	private void showPlayerGems(CommandSender sender, String playerName) {
+		Player target = Bukkit.getPlayer(playerName);
+		if (target != null) {
+			sender.sendMessage("§7§oDer Spieler §6§o" + target.getName() + " §7§obesitzt§b§o "
+					+ CoinAPI.getGems(target.getUniqueId().toString()) + " §a§oGems");
+		} else {
+			handlePlayerNotOnline(sender, playerName);
+		}
+	}
+
+	private void addGemsToPlayer(CommandSender sender, String playerName, String gemAmount) {
+		if (!(sender instanceof Player) || sender.hasPermission("coin.admin")) {
+			Player target = Bukkit.getPlayer(playerName);
+			if (target == null) {
+				handlePlayerNotOnline(sender, playerName);
+				return;
+			}
+
+			try {
+				int gems = Integer.parseInt(gemAmount);
+				CoinAPI.addGems(target.getUniqueId().toString(), gems);
+				sender.sendMessage("§7§oDem Spieler §6§o" + target.getName() + " §7§owurden §b§o" + gems + " §a§oGems §7§ogegeben!");
+				sendMessageToTargetPlayer(target, "§a§oDir wurden §b§o" + gems + " §a§oGems gegeben!");
+			} catch (NumberFormatException e) {
+				sender.sendMessage("§c§oDie Zahl muss aus Nummern bestehen. §6§o(0123456789)");
 			}
 		} else {
-			CommandSender p = sender;
-			if (args[0].equalsIgnoreCase("add")) {
-					String name = args[1];
-					String coin = args[2];
-					Player t = Bukkit.getPlayer(name);
-					if (t != null) {
-						if (coin != null)
-							try {
-								int preisint = Integer.parseInt(coin);
-								CoinAPI.addGems(t.getUniqueId().toString(), preisint);
-								p.sendMessage("§7§oDem Spieler §a§o" + t.getName() + " §b§o" + preisint
-										+ " §a§oGems §7§ogegeben!");
-								t.sendMessage("§a§oDir wurden §b§o" + preisint + " §a§oGems gegeben!");
-							} catch (NumberFormatException exception) {
-								p.sendMessage("§c§oDie Zahl muss aus Nummern bestehen. (0123456789)");
-							}
-					} else {
-						p.sendMessage("§c§oDer Spieler ist nicht Online!");
-					}
-			} else if (args[0].equalsIgnoreCase("show")) {
-				String name = args[1];
-				Player t = Bukkit.getPlayer(name);
-				if (t != null) {
-					p.sendMessage("§7§oDer Spieler §6§o" + t.getName() + " §7§obesitzt§b§o "
-							+ CoinAPI.getGems(t.getUniqueId().toString()) + " §a§oGems");
-				} else {
-					p.sendMessage("§c§oDer Spieler ist nicht Online!");
-				}
-			}
+			sender.sendMessage("§c§oDen Befehl dürfen nur Admins nutzen!");
 		}
-		return false;
 	}
 
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		if (args.length == 0) {
+			if (sender instanceof Player) {
+				Player p = (Player) sender;
+				sendMessageToPlayer(p, "§6§o" + p.getDisplayName() + " §7§odu hast §b§o"
+						+ CoinAPI.getGems(p.getUniqueId().toString()) + " §a§oGems!");
+			} else {
+				sender.sendMessage("§c§oDieser Befehl kann nur von einem Spieler ohne Argumente genutzt werden.");
+			}
+			return true;
+		}
+
+		if (args.length >= 2) {
+			switch (args[0].toLowerCase()) {
+				case "show":
+					showPlayerGems(sender, args[1]);
+					break;
+
+				case "add":
+					if (args.length == 3) {
+						addGemsToPlayer(sender, args[1], args[2]);
+					} else {
+						sender.sendMessage("§c§oVerwendung: /gem add <Spieler> <Menge>");
+					}
+					break;
+
+				default:
+					sender.sendMessage("§c§oUngültiger Befehl. Nutze '/gem show <Spieler>' oder '/gem add <Spieler> <Menge>'");
+					break;
+			}
+			return true;
+		}
+
+		sender.sendMessage("§c§oUngültige Verwendung des Befehls. Nutze '/gem', '/gem show <Spieler>' oder '/gem add <Spieler> <Menge>'");
+		return true;
+	}
 }

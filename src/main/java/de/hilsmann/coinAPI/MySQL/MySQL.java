@@ -53,12 +53,17 @@ public class MySQL {
   public static boolean isConnected() {
     return (con != null);
   }
-  
+
   public static void createTable() {
     try {
-      con.prepareStatement("CREATE TABLE IF NOT EXISTS coins (UUID VARCHAR(100), NAME VARCHAR(100), coins INT(16), gems INT(16), crystals INT(16))").executeUpdate();
+      con.prepareStatement("CREATE TABLE IF NOT EXISTS coins (" +
+              "UUID VARCHAR(100) PRIMARY KEY, " +  // UUID as PRIMARY KEY
+              "NAME VARCHAR(100), " +
+              "coins INT(16), " +
+              "gems INT(16), " +
+              "crystals INT(16))").executeUpdate();
     } catch (SQLException e) {
       e.printStackTrace();
-    } 
+    }
   }
 }
