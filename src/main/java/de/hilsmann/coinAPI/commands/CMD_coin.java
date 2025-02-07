@@ -3,6 +3,9 @@ package de.hilsmann.coinAPI.commands;
 import de.hilsmann.coinAPI.API.CoinAPI;
 import de.hilsmann.coinAPI.CoinMain;
 import de.hilsmann.coinAPI.GUI.TopInventory;
+import de.hilsmann.coinAPI.Konto.KontoFunctions;
+import de.hilsmann.coinAPI.Konto.KontoManager;
+import de.hilsmann.coinAPI.Konto.KontoUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -101,6 +104,7 @@ public class CMD_coin implements CommandExecutor {
 			if (CoinAPI.getCoins(p.getUniqueId().toString()) >= coins) {
 				CoinAPI.addCoins(target.getUniqueId().toString(), coins);
 				CoinAPI.removeCoins(p.getUniqueId().toString(), coins);
+				CoinAPI.transactCoins(p.getUniqueId().toString(),target.getUniqueId().toString(),coins);
 				sendMessageToPlayer(p, "§7§oDu hast dem Spieler §6§o" + target.getName() + " §7§ogerade §6§o" + coins + " §7§oCoins gezahlt!");
 				sendMessageToTargetPlayer(target, "§6§o" + p.getName() + " §a§ohat dir §6§o" + coins + " §a§oCoins gezahlt!");
 			} else {
@@ -144,6 +148,9 @@ public class CMD_coin implements CommandExecutor {
 							sendMessageToPlayer(p, "§c§oDu musst eine Menge von Coins angeben. Beispiel: '/coin add <Spieler> <Menge>'");
 							break;
 
+						case "konto":
+							KontoUtils.sendTransactionLogMessages(p,6,null);
+							break;
 						default:
 							sendMessageToPlayer(p, "§c§oUngültiger Befehl. Nutze '/coin pay <Spieler> <Menge>' oder '/coin show <Spieler>'");
 							break;
