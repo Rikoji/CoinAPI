@@ -170,4 +170,12 @@ public class CoinAPI {
     public static void removeCrystals(String uuid, int crystals) {
         setCrystals(uuid, getCrystals(uuid) - crystals);
     }
+
+    public static int calculateTax(int amount, double taxRate) {
+        if (taxRate < 0) {
+            throw new IllegalArgumentException("Steuersatz darf nicht negativ sein.");
+        }
+        double taxAmount = (amount * taxRate) / 100.0;
+        return (int) Math.round(amount - taxAmount);
+    }
 }

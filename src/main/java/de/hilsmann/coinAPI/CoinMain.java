@@ -95,4 +95,8 @@ public class CoinMain extends JavaPlugin {
 			toplist.add(formatted);
 		}
 	}
+
+	public static CoinMain getInstance(){
+		return instance;
+	}
 }

@@ -10,7 +10,8 @@ import java.sql.SQLException;
 public class MySQL {
   public static Connection con;
 
-  private static final boolean USE_ONLINE_DB = CoinMain.instance.getConfig().getBoolean("database.useOnlineDb");;
+
+  private static final boolean USE_ONLINE_DB = CoinMain.getInstance().getConfig().getBoolean("database.useOnlineDb");
   private static String MYSQL_URL;
   private static String MYSQL_USER;
   private static String MYSQL_PASSWORD;
@@ -21,7 +22,7 @@ public class MySQL {
 
   public static void connect() throws SQLException {
     if (USE_ONLINE_DB) {
-      FileConfiguration config = CoinMain.instance.getConfig();
+      FileConfiguration config = CoinMain.getInstance().getConfig();
 
       String host = config.getString("database.host");
       int port = config.getInt("database.port");
