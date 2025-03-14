@@ -102,8 +102,8 @@ public class CMD_coin implements CommandExecutor {
 			}
 
 			if (CoinAPI.getCoins(p.getUniqueId().toString()) >= coins) {
-				CoinAPI.addCoins(target.getUniqueId().toString(), coins);
-				CoinAPI.removeCoins(p.getUniqueId().toString(), coins);
+				/*CoinAPI.addCoins(target.getUniqueId().toString(), coins);
+				CoinAPI.removeCoins(p.getUniqueId().toString(), coins);*/
 				CoinAPI.transactCoins(p.getUniqueId().toString(),target.getUniqueId().toString(),coins);
 				sendMessageToPlayer(p, "§7§oDu hast dem Spieler §6§o" + target.getName() + " §7§ogerade §6§o" + coins + " §7§oCoins gezahlt!");
 				sendMessageToTargetPlayer(target, "§6§o" + p.getName() + " §a§ohat dir §6§o" + coins + " §a§oCoins gezahlt!");
