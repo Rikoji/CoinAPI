@@ -21,7 +21,7 @@ public class CoinMain extends JavaPlugin {
 	public static CoinMain instance;
 	public static ArrayList<String> toplist = new ArrayList<>();
 	public static ArrayList<String> topPlayerList;
-	public static String version = "1.0_02";
+	public static String version = "1.1_02";
 
 	// Statischer Logger
 	public static final Logger logger = Logger.getLogger("CoinAPI");
@@ -29,6 +29,7 @@ public class CoinMain extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		instance = this;
+		CoinAPI.init(this);
 
 		logger.info(CC.YELLOW + "CoinAPI v" + version + CC.GREEN + " wird aktiviert...");
 		logger.info(CC.GREEN_BOLD + "   _____      _                  _____ _____ ");
@@ -50,7 +51,6 @@ public class CoinMain extends JavaPlugin {
 			logger.severe("Error creating a connection to the database: " + e.getMessage());
 		}
 
-		MySQL.createTable();
 		loadCommands();
 		createTop();
 
@@ -68,6 +68,8 @@ public class CoinMain extends JavaPlugin {
 		logger.info(CC.RED_BOLD + "  \\_____\\___/|_|_| |_| /_/    \\_\\_|   |_____|");
 		logger.info(CC.RED_BOLD + "                                             ");
 		logger.info(CC.YELLOW + "CoinAPI v" + version + CC.RED + " erfolgreich deaktiviert!");
+
+		CoinAPI.dispose();
 		MySQL.disconnect();
 		instance = null;
 	}

@@ -1,7 +1,9 @@
 package de.hilsmann.coinAPI.Konto;
 
+import de.hilsmann.coinAPI.MySQL.MySQL;
 import org.bukkit.Bukkit;
 
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -15,29 +17,75 @@ public class KontoFunctions {
     public KontoFunctions(UUID playerUUID) {
         this.playerUUID = playerUUID;
         this.transactionLog = new ArrayList<>();
+        loadFromDatabase(); // Daten beim Erstellen laden
     }
 
     /**
-     * Loggt einen Methodenaufruf.
-     * @param methodName Name der Methode, die aufgerufen wurde.
-     */
-    public void logMethodCall(String methodName) {
-        LOGGER.info("Methode aufgerufen: " + methodName + " für Spieler: " + getPlayerName());
-    }
-
-    /**
-     * Fügt eine Transaktion zum Log hinzu.
-     * @param action Art der Transaktion (z.B. "add", "remove", "pay").
-     * @param amount Betrag der Transaktion.
-     * @param timestamp Zeitstempel der Transaktion.
+     * Fügt eine Transaktion hinzu und speichert diese direkt in der Datenbank.
      */
     public void addTransactionLog(String action, double amount, long timestamp, String receiverUUID, String senderUUID) {
-        transactionLog.add(new Transaction(action, amount, timestamp, receiverUUID, senderUUID));
+        Transaction transaction = new Transaction(action, amount, timestamp, receiverUUID, senderUUID);
+        transactionLog.add(transaction);
+        saveTransactionToDatabase(transaction);
+    }
+
+    /**
+     * Speichert eine einzelne Transaktion in die Datenbank.
+     */
+    private void saveTransactionToDatabase(Transaction transaction) {
+        String sql = "INSERT INTO transactions (playerUUID, action, amount, timestamp, receiverUUID, senderUUID) VALUES (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement st = MySQL.con.prepareStatement(sql)) {
+            st.setString(1, playerUUID.toString());
+            st.setString(2, transaction.action);
+            st.setDouble(3, transaction.amount);
+            st.setLong(4, transaction.timestamp);
+            st.setString(5, transaction.receiverUUID);
+            st.setString(6, transaction.senderUUID);
+            st.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.warning("Fehler beim Speichern der Transaktion für " + getPlayerName() + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Lädt alle Transaktionen eines Spielers aus der Datenbank.
+     */
+    private void loadFromDatabase() {
+        String sql = "SELECT * FROM transactions WHERE playerUUID = ?";
+        try (PreparedStatement st = MySQL.con.prepareStatement(sql)) {
+            st.setString(1, playerUUID.toString());
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                String action = rs.getString("action");
+                double amount = rs.getDouble("amount");
+                long timestamp = rs.getLong("timestamp");
+                String receiverUUID = rs.getString("receiverUUID");
+                String senderUUID = rs.getString("senderUUID");
+
+                transactionLog.add(new Transaction(action, amount, timestamp, receiverUUID, senderUUID));
+            }
+        } catch (SQLException e) {
+            LOGGER.warning("Fehler beim Laden des Transaktionslogs für " + getPlayerName() + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Gibt das Transaktionslog als lesbare Liste zurück.
+     */
+    public List<String> getTransactionLogList() {
+        List<String> logList = new ArrayList<>();
+        for (Transaction transaction : transactionLog) {
+            logList.add("Aktion: " + transaction.action +
+                    ", Betrag: " + transaction.amount +
+                    ", Zeit: " + transaction.timestamp +
+                    ", Empfänger: " + transaction.receiverUUID +
+                    ", Sender: " + transaction.senderUUID);
+        }
+        return logList;
     }
 
     /**
      * Gibt das Transaktionslog als JSON-String zurück.
-     * @return JSON-String der Transaktionslogs.
      */
     public String getTransactionLog() {
         StringBuilder sb = new StringBuilder("[");
@@ -52,36 +100,15 @@ public class KontoFunctions {
     }
 
     /**
-     * Gibt das Transaktionslog als lesbare Liste zurück.
-     * @return Liste der Transaktionen.
-     */
-    public List<String> getTransactionLogList() {
-        List<String> logList = new ArrayList<>();
-        for (Transaction transaction : transactionLog) {
-            logList.add("Aktion: " + transaction.action + ", Betrag: " + transaction.amount + ", Zeit: " + transaction.timestamp + ", Empfänger: " + transaction.receiverUUID + ", Sender: " + transaction.senderUUID);
-        }
-        return logList;
-    }
-
-    /**
-     * Speichert die Transaktionshistorie in die Datenbank.
-     */
-    public void saveToDatabase() {
-        LOGGER.info("Speichere Transaktionslog für " + getPlayerName() + " in die Datenbank: " + getTransactionLog());
-    }
-
-    /**
-     * Entfernt das Objekt und speichert die Daten vorher.
+     * Entfernt das Objekt und sichert die Daten vorher.
      */
     public void dispose() {
-        saveToDatabase();
         transactionLog.clear();
         LOGGER.info("KontoFunctions-Instanz für " + getPlayerName() + " wurde entfernt.");
     }
 
     /**
-     * Lädt den Spielernamen basierend auf der UUID.
-     * @return Name des Spielers oder "Unknown", falls nicht online.
+     * Holt den Namen des Spielers.
      */
     private String getPlayerName() {
         return Bukkit.getOfflinePlayer(playerUUID).getName();
@@ -103,11 +130,10 @@ public class KontoFunctions {
             this.timestamp = timestamp;
             this.receiverUUID = receiverUUID;
             this.senderUUID = senderUUID;
-
         }
 
         public String toJson() {
-            return "{\"action\":\"" + action + "\", \"amount\":" + amount + ", \"timestamp\":" + timestamp + ", \"receiverUUID\":" + receiverUUID + ", \"senderUUID\":" + senderUUID + "}";
+            return "{\"action\":\"" + action + "\", \"amount\":" + amount + ", \"timestamp\":" + timestamp + ", \"receiverUUID\":\"" + receiverUUID + "\", \"senderUUID\":\"" + senderUUID + "\"}";
         }
     }
 }

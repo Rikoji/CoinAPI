@@ -17,18 +17,19 @@ public class JoinListeners implements Listener {
 	public void onJoin(PlayerJoinEvent e) {
 		Player p = e.getPlayer();
 		String playerUUID = p.getUniqueId().toString();
-		int coins = CoinAPI.getCoins(playerUUID);
 
-		if (!p.hasPlayedBefore()) {
-			if (coins == -999999999) {
-				CoinAPI.createCoin(playerUUID, p.getName(), 100, 5, 0);
-				KontoFunctions konto = KontoManager.getKonto(UUID.fromString(playerUUID));
-				konto.addTransactionLog("Startgeld",100, System.currentTimeMillis(), playerUUID, KontoType.SERVER.getDisplayName());
-			} else {
-				CoinAPI.createCoin(playerUUID, p.getName(), coins, CoinAPI.getGems(playerUUID), CoinAPI.getCrystals(playerUUID));
-			}
+		// Prüfen, ob ein Konto existiert
+		if (!CoinAPI.exists(playerUUID)) {
+			// Konto erstellen, wenn es nicht existiert
+			CoinAPI.createCoin(playerUUID, p.getName(), 100, 5, 0);
+			KontoFunctions konto = KontoManager.getKonto(UUID.fromString(playerUUID));
+			konto.addTransactionLog("Startgeld", 100, System.currentTimeMillis(), playerUUID, KontoType.SERVER.getDisplayName());
 		} else {
-			CoinAPI.createCoin(playerUUID, p.getName(), coins, CoinAPI.getGems(playerUUID), CoinAPI.getCrystals(playerUUID));
+			// Existierendes Konto aktualisieren
+			CoinAPI.createCoin(playerUUID, p.getName(),
+					CoinAPI.getCoins(playerUUID),
+					CoinAPI.getGems(playerUUID),
+					CoinAPI.getCrystals(playerUUID));
 		}
 	}
 }
