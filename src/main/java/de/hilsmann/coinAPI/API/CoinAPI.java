@@ -76,9 +76,9 @@ public class CoinAPI {
 
     public static int getCoins(String uuid) {
         if (!dbAvailable) {
-            return coinCache.getOrDefault(uuid, 0);
+            return coinCache.getOrDefault(uuid, -999999999);
         }
-        return getValueFromDatabase(uuid, "coins").orElseGet(() -> coinCache.getOrDefault(uuid, 0));
+        return getValueFromDatabase(uuid, "coins").orElseGet(() -> coinCache.getOrDefault(uuid, -999999999));
     }
 
     public static void setCoins(String uuid, int coins) {
@@ -259,13 +259,44 @@ public class CoinAPI {
         // Events für beide Spieler feuern
         Bukkit.getPluginManager().callEvent(new CoinChangeEvent(senderUUID, "coins", senderCoins, senderCoins - coins));
         Bukkit.getPluginManager().callEvent(new CoinChangeEvent(receiverUUID, "coins", receiverCoins, receiverCoins + coins));
+    }
 
-        System.out.println("Transaktion abgeschlossen: " + coins + " Coins von " + senderUUID + " zu " + receiverUUID);
+    public static void transactCoinsDiffer(String senderUUID, String receiverUUID, int coinsTaxless, int coinsTaxed) {
+        if (coinsTaxless <= 0) {
+            System.out.println("Ungültiger Transaktionsbetrag: " + coinsTaxless);
+            return;
+        }
+
+        int senderCoins = getCoins(senderUUID);
+        int receiverCoins = getCoins(receiverUUID);
+
+        if (senderCoins < coinsTaxless) {
+            System.out.println("Sender hat nicht genügend Coins. Transaktion abgebrochen.");//d
+            return;
+        }
+
+        // Transaktion durchführen
+        setCoins(senderUUID, senderCoins - coinsTaxless);
+        setCoins(receiverUUID, receiverCoins + coinsTaxed);
+
+        // Konto-Log aktualisieren
+        KontoFunctions senderKonto = KontoManager.getKonto(UUID.fromString(senderUUID));
+        KontoFunctions receiverKonto = KontoManager.getKonto(UUID.fromString(receiverUUID));
+
+        long timestamp = System.currentTimeMillis();
+
+        senderKonto.addTransactionLog("Überweisung an " + receiverUUID, -coinsTaxless, timestamp, receiverUUID, senderUUID);
+        receiverKonto.addTransactionLog("Überweisung von " + senderUUID, coinsTaxed, timestamp, receiverUUID, senderUUID);
+
+        // Events für beide Spieler feuern
+        Bukkit.getPluginManager().callEvent(new CoinChangeEvent(senderUUID, "coins", senderCoins, senderCoins - coinsTaxless));
+        Bukkit.getPluginManager().callEvent(new CoinChangeEvent(receiverUUID, "coins", receiverCoins, receiverCoins + coinsTaxed));
     }
 
     public static void createCoin(String uuid, String name, int coins, int gems, int crystals) {
         if (getCoins(uuid) == -999999999) {
             // Neuer Eintrag
+            System.out.println("Sollte createn part");
             try {
                 String insert = "INSERT INTO coins (UUID, name, coins, gems, crystals) VALUES (?, ?, ?, ?, ?)";
                 try (PreparedStatement st = MySQL.con.prepareStatement(insert)) {
@@ -291,7 +322,7 @@ public class CoinAPI {
                 pendingSync.add(uuid);
             }
         } else {
-            // Konto aktualisieren
+            System.out.println("ELSE BLOCK");
             setCoins(uuid, coins);
             setGems(uuid, gems);
             setCrystals(uuid, crystals);

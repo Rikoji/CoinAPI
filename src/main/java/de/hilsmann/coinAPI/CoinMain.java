@@ -2,7 +2,9 @@ package de.hilsmann.coinAPI;
 
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import de.hilsmann.coinAPI.API.CoinAPI;
 import de.hilsmann.coinAPI.MySQL.MySQL;
@@ -14,6 +16,8 @@ import de.hilsmann.coinAPI.listener.JoinListeners;
 import de.hilsmann.coinAPI.util.CC;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import static de.hilsmann.coinAPI.GUI.TopInventory.isExcludedUUID;
 
 
 public class CoinMain extends JavaPlugin {
@@ -81,13 +85,15 @@ public class CoinMain extends JavaPlugin {
 	}
 
 	public static void createTop() {
-		topPlayerList = (ArrayList<String>) CoinAPI.getTopPlayers();
+		// Hole die Top-Player-Liste und filtere direkt die ausgeschlossenen UUIDs
+		topPlayerList = CoinAPI.getTopPlayers().stream()
+				.filter(uuid -> !isExcludedUUID(UUID.fromString(uuid)))
+				.limit(18) // Limitiere auf die Top 10
+				.collect(Collectors.toCollection(ArrayList::new));
 
 		toplist.clear();
 
-		int limit = Math.min(topPlayerList.size(), 10); // Setzt die Grenze auf 10 oder die tatsächliche Größe der Liste.
-
-		for (int i = 0; i < limit; i++) {
+		for (int i = 0; i < topPlayerList.size(); i++) {
 			String formatted = String.format("§%s#%d §7- §a%s§7 - §b%s",
 					(i == 0 ? "4" : (i == 1 ? "6" : "e")),  // Farbcodierung je nach Rang
 					i + 1,  // Rangnummer
@@ -97,6 +103,7 @@ public class CoinMain extends JavaPlugin {
 			toplist.add(formatted);
 		}
 	}
+
 
 	public static CoinMain getInstance(){
 		return instance;

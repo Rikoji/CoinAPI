@@ -21,11 +21,13 @@ public class JoinListeners implements Listener {
 		// Prüfen, ob ein Konto existiert
 		if (!CoinAPI.exists(playerUUID)) {
 			// Konto erstellen, wenn es nicht existiert
+			System.out.println("Spieler existiert nicht");
 			CoinAPI.createCoin(playerUUID, p.getName(), 100, 5, 0);
 			KontoFunctions konto = KontoManager.getKonto(UUID.fromString(playerUUID));
 			konto.addTransactionLog("Startgeld", 100, System.currentTimeMillis(), playerUUID, KontoType.SERVER.getDisplayName());
 		} else {
 			// Existierendes Konto aktualisieren
+			System.out.println("Spieler existiert");
 			CoinAPI.createCoin(playerUUID, p.getName(),
 					CoinAPI.getCoins(playerUUID),
 					CoinAPI.getGems(playerUUID),

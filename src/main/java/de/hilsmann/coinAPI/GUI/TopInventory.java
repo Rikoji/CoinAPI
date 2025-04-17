@@ -42,7 +42,8 @@ public class TopInventory {
 
     // Fügt einen Spieler in das Inventar ein (mit Name, Platzierung und Coins)
     private static void addPlayerToInventory(Inventory inv, int slot, UUID uuid) {
-        ItemStack playerSkull = SkullCreator.itemFromUUID(uuid);
+        ItemStack playerSkull = SkullCreator.itemFromUuid(uuid);
+        //TODO ITEM FROM MAP
         ItemMeta meta = playerSkull.getItemMeta();
         if (meta != null) {
             meta.setLore(Arrays.asList("§7Kontostand: §e" + CoinAPI.getCoins(uuid.toString())));
@@ -64,9 +65,25 @@ public class TopInventory {
         // Adding podium (1., 2., 3.)
         addPlaceItems(inv);
 
-        // Add TOP 10 Players
+        // Top Plätze definieren
+        int[] podiumSlots = {10, 19, 28};
         List<String> topPlayerList = CoinMain.topPlayerList;
         int index = 0;
+
+        // 1. 2. und 3. Platz setzen
+        for (int i = 0; i < podiumSlots.length && index < topPlayerList.size(); ) {
+            UUID uuid = UUID.fromString(topPlayerList.get(index));
+            index++; // Index immer erhöhen, um Endlosschleifen zu verhindern
+
+            if (isExcludedUUID(uuid)) {
+                continue;
+            }
+
+            addPlayerToInventory(inv, podiumSlots[i], uuid);
+            i++; // Nur bei erfolgreichem Setzen den Slot-Index erhöhen
+        }
+
+        // Restliche Spieler auf freie Slots verteilen
         for (int i = 0; i < inv.getSize(); i++) {
             if (inv.getItem(i) != null) {
                 continue;
@@ -77,8 +94,13 @@ public class TopInventory {
             }
 
             UUID uuid = UUID.fromString(topPlayerList.get(index));
+            index++; // Index immer erhöhen
+
+            if (isExcludedUUID(uuid)) {
+                continue;
+            }
+
             addPlayerToInventory(inv, i, uuid);
-            index++;
         }
 
         // Fill empty slots with RED_STAINED_GLASS_PANE
@@ -91,4 +113,14 @@ public class TopInventory {
 
         return inv;
     }
+
+    /**
+     * Überprüft, ob die UUID ausgeschlossen ist.
+     */
+    public static boolean isExcludedUUID(UUID uuid) {
+        return uuid.toString().equalsIgnoreCase("2966eed3-ce23-40f6-a784-42d6c6c165ee") ||
+                uuid.toString().equalsIgnoreCase("e0349cab-b6f2-4465-9084-4df6631ae4d0") ||
+                uuid.toString().equalsIgnoreCase("c29a20a7-8e73-4393-9e4a-c41aae04c0e5");
+    }
+
 }
